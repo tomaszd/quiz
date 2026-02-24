@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Quiz wiedzy ogólnej</h1>
+
+        <div id="quiz-box">
+            <div id="question-counter"></div>
+            <div id="question"></div>
+            <div id="answers"></div>
+            <button id="next-btn" onclick="nextQuestion()" style="display:none">
+                Następne pytanie ➡️
+            </button>
+        </div>
+
+        <div id="result-box" style="display:none">
+            <h2>🎉 Koniec quizu!</h2>
+            <p id="score-text"></p>
+            <button onclick="restartQuiz()">🔄 Zagraj ponownie</button>
+        </div>
+    </div>
+    <script src="quiz.js"></script>
+</body>
+</html>
