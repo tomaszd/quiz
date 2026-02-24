@@ -3,28 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz</title>
+    <title>🧠 Quiz wiedzy</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<!-- ===================== HOME ===================== -->
+<div id="screen-home" class="screen active">
     <div class="container">
-        <h1>🧠 Quiz wiedzy ogólnej</h1>
+        <div class="logo">🧠</div>
+        <h1>Quiz wiedzy</h1>
+        <p class="subtitle">Sprawdź swoją wiedzę z różnych dziedzin!</p>
 
-        <div id="quiz-box">
-            <div id="question-counter"></div>
-            <div id="question"></div>
-            <div id="answers"></div>
-            <button id="next-btn" onclick="nextQuestion()" style="display:none">
-                Następne pytanie ➡️
-            </button>
-        </div>
+        <section class="section">
+            <h2>📚 Wybierz kategorię</h2>
+            <div class="cat-grid">
+                <button class="cat-btn" data-cat="all"         onclick="selectCategory(this,'all')">🌍 Wszystkie</button>
+                <button class="cat-btn" data-cat="history"     onclick="selectCategory(this,'history')">📜 Historia</button>
+                <button class="cat-btn" data-cat="geography"   onclick="selectCategory(this,'geography')">🗺️ Geografia</button>
+                <button class="cat-btn" data-cat="mathematics" onclick="selectCategory(this,'mathematics')">🔢 Matematyka</button>
+                <button class="cat-btn" data-cat="biology"     onclick="selectCategory(this,'biology')">🌿 Biologia</button>
+                <button class="cat-btn" data-cat="sport"       onclick="selectCategory(this,'sport')">⚽ Sport</button>
+            </div>
+        </section>
 
-        <div id="result-box" style="display:none">
-            <h2>🎉 Koniec quizu!</h2>
-            <p id="score-text"></p>
-            <button onclick="restartQuiz()">🔄 Zagraj ponownie</button>
+        <section class="section">
+            <h2>🔢 Liczba pytań</h2>
+            <div class="count-row">
+                <button class="count-btn" data-n="5"  onclick="selectCount(this,5)">5</button>
+                <button class="count-btn" data-n="10" onclick="selectCount(this,10)">10</button>
+                <button class="count-btn" data-n="20" onclick="selectCount(this,20)">20</button>
+            </div>
+        </section>
+
+        <button id="start-btn" class="btn-start" onclick="startQuiz()">▶️ Rozpocznij quiz</button>
+
+        <div class="secondary-actions">
+            <button class="btn-secondary" onclick="showHistory()">📊 Historia wyników</button>
+            <button class="btn-danger-sm" onclick="confirmClearHistory()">🗑️ Wyczyść historię</button>
         </div>
     </div>
-    <script src="quiz.js"></script>
+</div>
+
+<!-- ===================== QUIZ ===================== -->
+<div id="screen-quiz" class="screen">
+    <div class="container">
+        <div class="quiz-topbar">
+            <span id="quiz-cat-label" class="badge"></span>
+            <span id="quiz-counter" class="counter"></span>
+        </div>
+        <div class="progress-bar">
+            <div id="quiz-progress" class="progress-fill"></div>
+        </div>
+        <div id="quiz-question" class="question-text"></div>
+        <div id="quiz-answers" class="answers-grid"></div>
+        <button id="quiz-next-btn" class="btn-next" onclick="nextQuestion()" style="display:none">
+            Następne pytanie ➡️
+        </button>
+    </div>
+</div>
+
+<!-- ===================== REVIEW ===================== -->
+<div id="screen-review" class="screen">
+    <div class="container">
+        <div class="review-header">
+            <div class="review-icon">🔄</div>
+            <h2>Powtórka błędnych odpowiedzi</h2>
+            <p>Spróbuj ponownie odpowiedzieć na pytania, w których popełniłeś błąd!</p>
+        </div>
+        <div class="quiz-topbar">
+            <span class="badge badge-review">Błędne odpowiedzi</span>
+            <span id="review-counter" class="counter"></span>
+        </div>
+        <div class="progress-bar">
+            <div id="review-progress" class="progress-fill progress-fill-review"></div>
+        </div>
+        <div id="review-question" class="question-text"></div>
+        <div id="review-answers" class="answers-grid"></div>
+        <button id="review-next-btn" class="btn-next" onclick="nextReview()" style="display:none">
+            Następne ➡️
+        </button>
+    </div>
+</div>
+
+<!-- ===================== RESULTS ===================== -->
+<div id="screen-results" class="screen">
+    <div class="container">
+        <div id="results-emoji" class="result-emoji"></div>
+        <h2>Wyniki quizu</h2>
+
+        <div class="results-cards">
+            <div class="result-card" id="result-main-card">
+                <div class="result-card-title">🎯 Wynik główny</div>
+                <div id="result-score-big" class="score-big"></div>
+                <div id="result-score-label" class="score-label"></div>
+            </div>
+            <div class="result-card result-card-review" id="result-review-card" style="display:none">
+                <div class="result-card-title">🔄 Wynik powtórki</div>
+                <div id="result-review-big" class="score-big score-review"></div>
+                <div id="result-review-label" class="score-label"></div>
+            </div>
+        </div>
+
+        <div id="wrong-summary" class="wrong-summary" style="display:none">
+            <h3>❌ Pytania z błędami:</h3>
+            <ul id="wrong-list"></ul>
+        </div>
+
+        <div class="result-actions">
+            <button class="btn-save" id="save-btn" onclick="saveResult()">💾 Zapisz wynik</button>
+            <button class="btn-next" onclick="restartSame()">🔄 Zagraj ponownie</button>
+            <button class="btn-secondary" onclick="goHome()">🏠 Menu główne</button>
+        </div>
+        <div id="save-msg" class="save-msg" style="display:none">✅ Wynik zapisany!</div>
+    </div>
+</div>
+
+<!-- ===================== HISTORY MODAL ===================== -->
+<div id="modal-history" class="modal" style="display:none">
+    <div class="modal-box">
+        <h2>📊 Historia wyników</h2>
+        <div id="history-content" class="history-content"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeHistory()">✖️ Zamknij</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== CONFIRM MODAL ===================== -->
+<div id="modal-confirm" class="modal" style="display:none">
+    <div class="modal-box modal-box-sm">
+        <h2>⚠️ Potwierdzenie</h2>
+        <p>Czy na pewno chcesz wyczyścić całą historię wyników?</p>
+        <div class="modal-actions">
+            <button class="btn-danger-sm btn-lg" onclick="clearHistory()">🗑️ Tak, wyczyść</button>
+            <button class="btn-secondary" onclick="closeConfirm()">Anuluj</button>
+        </div>
+    </div>
+</div>
+
+<script src="questions.js"></script>
+<script src="quiz.js"></script>
 </body>
 </html>
