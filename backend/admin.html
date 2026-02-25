@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Admin Panel</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; }
+
+.topbar {
+    background:#1e293b; padding:16px 32px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid #334155;
+}
+.topbar h1 { font-size:1.3em; color:#818cf8; }
+.user-info { display:flex; align-items:center; gap:10px; font-size:0.9em; }
+.user-info img { width:32px; height:32px; border-radius:50%; }
+.btn-login { background:#4f46e5; color:white; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-size:0.9em; }
+.btn-login:hover { background:#4338ca; }
+.btn-logout { background:#475569; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.85em; }
+
+.layout { display:grid; grid-template-columns:340px 1fr; gap:0; min-height:calc(100vh - 57px); }
+
+/* Sidebar */
+.sidebar { background:#1e293b; border-right:1px solid #334155; padding:24px; display:flex; flex-direction:column; gap:24px; }
+.sidebar h2 { font-size:1em; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+
+.form-group { display:flex; flex-direction:column; gap:6px; }
+label { font-size:0.82em; color:#94a3b8; }
+input, textarea, select {
+    background:#0f172a; border:1px solid #334155; border-radius:8px;
+    color:#e2e8f0; padding:9px 12px; font-size:0.9em; font-family:inherit;
+    outline:none; transition:border-color .2s;
+}
+input:focus, textarea:focus, select:focus { border-color:#818cf8; }
+textarea { resize:vertical; min-height:100px; }
+
+.btn { width:100%; padding:11px; border:none; border-radius:10px; cursor:pointer; font-size:0.95em; font-weight:600; transition:all .2s; }
+.btn-primary { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; }
+.btn-primary:hover { opacity:.88; }
+.btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+.btn-danger { background:#ef4444; color:white; padding:5px 12px; border:none; border-radius:6px; cursor:pointer; font-size:0.8em; }
+.btn-danger:hover { background:#dc2626; }
+
+.tab-row { display:flex; gap:4px; background:#0f172a; border-radius:8px; padding:4px; }
+.tab { flex:1; padding:7px; border:none; border-radius:6px; cursor:pointer; font-size:0.85em; background:transparent; color:#94a3b8; transition:all .2s; }
+.tab.active { background:#334155; color:#e2e8f0; font-weight:600; }
+
+.status { padding:10px 14px; border-radius:8px; font-size:0.85em; display:none; }
+.status.ok  { background:#14532d; color:#86efac; }
+.status.err { background:#7f1d1d; color:#fca5a5; }
+.status.show { display:block; }
+.spinner { display:none; text-align:center; color:#818cf8; font-size:0.9em; padding:8px; }
+.spinner.show { display:block; }
+
+/* Main content */
+.main { padding:24px; overflow-y:auto; }
+.main-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.main-header h2 { font-size:1.2em; color:#e2e8f0; }
+.filter-row { display:flex; gap:10px; align-items:center; }
+.filter-row input, .filter-row select { width:auto; }
+.badge-count { background:#334155; color:#94a3b8; padding:3px 10px; border-radius:20px; font-size:0.8em; }
+
+/* Questions grid */
+#questions-list { display:flex; flex-direction:column; gap:12px; }
+
+.q-card {
+    background:#1e293b; border:1px solid #334155; border-radius:12px; padding:18px;
+    transition:border-color .2s;
+}
+.q-card:hover { border-color:#4f46e5; }
+.q-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+.q-id { color:#475569; font-size:0.75em; font-weight:600; white-space:nowrap; }
+.q-meta { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.chip { background:#334155; color:#94a3b8; padding:2px 8px; border-radius:20px; font-size:0.75em; }
+.chip-cat { background:#1e3a5f; color:#60a5fa; }
+.chip-src { background:#1a2e1a; color:#86efac; }
+.q-text { font-size:0.95em; color:#e2e8f0; margin-bottom:10px; line-height:1.5; }
+.q-answers { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.q-ans { background:#0f172a; border:1px solid #334155; border-radius:7px; padding:6px 10px; font-size:0.82em; color:#94a3b8; }
+.q-ans.correct { border-color:#22c55e; background:#052e16; color:#86efac; }
+.q-explanation { margin-top:10px; font-size:0.82em; color:#64748b; font-style:italic; }
+.q-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+.q-date { font-size:0.75em; color:#475569; }
+
+.empty { text-align:center; color:#475569; padding:60px 20px; }
+.empty .icon { font-size:3em; margin-bottom:12px; }
+
+.pagination { display:flex; gap:8px; justify-content:center; margin-top:20px; }
+.page-btn { background:#1e293b; border:1px solid #334155; color:#e2e8f0; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:0.85em; }
+.page-btn:hover { border-color:#818cf8; }
+.page-btn.active { background:#4f46e5; border-color:#4f46e5; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>🧠 Quiz Admin Panel</h1>
+    <div class="user-info" id="user-area">
+        <button class="btn-login" onclick="loginGoogle()">🔑 Zaloguj przez Google</button>
+    </div>
+</div>
+
+<div class="layout">
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar">
+
+        <div class="tab-row">
+            <button class="tab active" onclick="switchTab('topic',this)">📝 Z tematu</button>
+            <button class="tab" onclick="switchTab('pdf',this)">📄 Z PDF</button>
+        </div>
+
+        <!-- TOPIC FORM -->
+        <div id="tab-topic">
+            <div style="display:flex;flex-direction:column;gap:12px">
+                <div class="form-group">
+                    <label>Temat / tekst</label>
+                    <textarea id="topic-input" placeholder="np. Fotosynteza u roślin, Historia Polski w XX wieku, Prawa Newtona..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Liczba pytań</label>
+                    <select id="topic-count">
+                        <option value="5">5 pytań</option>
+                        <option value="10" selected>10 pytań</option>
+                        <option value="20">20 pytań</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Kategoria</label>
+                    <input id="topic-category" placeholder="np. Biologia" value="AI Generated">
+                </div>
+                <button class="btn btn-primary" id="btn-gen-topic" onclick="generateFromTopic()">
+                    ✨ Generuj pytania
+                </button>
+            </div>
+        </div>
+
+        <!-- PDF FORM -->
+        <div id="tab-pdf" style="display:none">
+            <div style="display:flex;flex-direction:column;gap:12px">
+                <div class="form-group">
+                    <label>Plik PDF</label>
+                    <input type="file" id="pdf-input" accept=".pdf">
+                </div>
+                <div class="form-group">
+                    <label>Liczba pytań</label>
+                    <select id="pdf-count">
+                        <option value="5">5 pytań</option>
+                        <option value="10" selected>10 pytań</option>
+                        <option value="20">20 pytań</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Kategoria</label>
+                    <input id="pdf-category" placeholder="np. PDF - Fizyka" value="PDF">
+                </div>
+                <button class="btn btn-primary" id="btn-gen-pdf" onclick="generateFromPdf()">
+                    📤 Wgraj i generuj
+                </button>
+            </div>
+        </div>
+
+        <div class="spinner" id="spinner">⏳ Generuję pytania przez AI...</div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main">
+        <div class="main-header">
+            <h2>📋 Pytania w bazie <span class="badge-count" id="q-count">0</span></h2>
+            <div class="filter-row">
+                <input id="filter-source" placeholder="🔍 Filtruj po źródle..." oninput="applyFilter()" style="width:200px">
+                <select id="filter-cat" onchange="applyFilter()" style="width:160px">
+                    <option value="">Wszystkie kategorie</option>
+                </select>
+                <button class="btn-login" onclick="loadQuestions()">🔄 Odśwież</button>
+            </div>
+        </div>
+
+        <div id="questions-list"></div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+</div>
+
+<script>
+const API = "";  // same origin
+let token = localStorage.getItem("quiz_token") || "";
+let allQuestions = [];
+let page = 0;
+const PAGE_SIZE = 20;
+
+// ---- Auth ----
+function loginGoogle() {
+    window.location.href = API + "/auth/google";
+}
+
+async function loadUser() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("token")) {
+        token = params.get("token");
+        localStorage.setItem("quiz_token", token);
+        window.history.replaceState({}, "", "/admin");
+    }
+    if (!token) return;
+    try {
+        const r = await fetch(API + "/auth/me", { headers: authHeader() });
+        if (!r.ok) { token = ""; localStorage.removeItem("quiz_token"); return; }
+        const u = await r.json();
+        document.getElementById("user-area").innerHTML = `
+            ${u.avatar_url ? `<img src="${u.avatar_url}" alt="">` : ""}
+            <span>${u.name || u.email}</span>
+            <button class="btn-logout" onclick="logout()">Wyloguj</button>`;
+    } catch {}
+}
+
+function logout() {
+    token = "";
+    localStorage.removeItem("quiz_token");
+    location.reload();
+}
+
+function authHeader() {
+    return token ? { "Authorization": `Bearer ${token}` } : {};
+}
+
+// ---- Tabs ----
+function switchTab(tab, btn) {
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-topic").style.display = tab === "topic" ? "block" : "none";
+    document.getElementById("tab-pdf").style.display   = tab === "pdf"   ? "block" : "none";
+}
+
+// ---- Status helpers ----
+function setStatus(msg, type) {
+    const el = document.getElementById("status");
+    el.textContent = msg;
+    el.className = `status show ${type}`;
+    setTimeout(() => el.classList.remove("show"), 5000);
+}
+
+function setSpinner(show) {
+    document.getElementById("spinner").className = "spinner" + (show ? " show" : "");
+}
+
+// ---- Generate from topic ----
+async function generateFromTopic() {
+    const topic    = document.getElementById("topic-input").value.trim();
+    const count    = parseInt(document.getElementById("topic-count").value);
+    const category = document.getElementById("topic-category").value.trim();
+    if (!topic) return setStatus("Wpisz temat!", "err");
+
+    setSpinner(true);
+    document.getElementById("btn-gen-topic").disabled = true;
+    try {
+        const r = await fetch(API + "/api/generate/topic", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeader() },
+            body: JSON.stringify({ topic, count, category }),
+        });
+        if (!r.ok) throw new Error((await r.json()).detail);
+        const data = await r.json();
+        setStatus(`✅ Wygenerowano ${data.length} pytań!`, "ok");
+        loadQuestions();
+    } catch (e) {
+        setStatus("❌ Błąd: " + e.message, "err");
+    } finally {
+        setSpinner(false);
+        document.getElementById("btn-gen-topic").disabled = false;
+    }
+}
+
+// ---- Generate from PDF ----
+async function generateFromPdf() {
+    const fileInput = document.getElementById("pdf-input");
+    const count     = parseInt(document.getElementById("pdf-count").value);
+    const category  = document.getElementById("pdf-category").value.trim();
+    if (!fileInput.files.length) return setStatus("Wybierz plik PDF!", "err");
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    setSpinner(true);
+    document.getElementById("btn-gen-pdf").disabled = true;
+    try {
+        const r = await fetch(API + `/api/generate/pdf?count=${count}&category=${encodeURIComponent(category)}`, {
+            method: "POST",
+            headers: authHeader(),
+            body: formData,
+        });
+        if (!r.ok) throw new Error((await r.json()).detail);
+        const data = await r.json();
+        setStatus(`✅ Wygenerowano ${data.length} pytań z PDF!`, "ok");
+        loadQuestions();
+    } catch (e) {
+        setStatus("❌ Błąd: " + e.message, "err");
+    } finally {
+        setSpinner(false);
+        document.getElementById("btn-gen-pdf").disabled = false;
+    }
+}
+
+// ---- Load questions ----
+async function loadQuestions() {
+    try {
+        const r = await fetch(API + "/api/questions?limit=200");
+        allQuestions = await r.json();
+        await loadCategories();
+        applyFilter();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function loadCategories() {
+    try {
+        const r    = await fetch(API + "/api/categories");
+        const cats = await r.json();
+        const sel  = document.getElementById("filter-cat");
+        const cur  = sel.value;
+        sel.innerHTML = '<option value="">Wszystkie kategorie</option>';
+        cats.forEach(c => {
+            const o = document.createElement("option");
+            o.value = c; o.textContent = c;
+            if (c === cur) o.selected = true;
+            sel.appendChild(o);
+        });
+    } catch {}
+}
+
+function applyFilter() {
+    const srcFilter = document.getElementById("filter-source").value.toLowerCase();
+    const catFilter = document.getElementById("filter-cat").value;
+    const filtered  = allQuestions.filter(q => {
+        const srcOk = !srcFilter || (q.source || "").toLowerCase().includes(srcFilter);
+        const catOk = !catFilter || q.category === catFilter;
+        return srcOk && catOk;
+    });
+    page = 0;
+    renderQuestions(filtered);
+}
+
+function renderQuestions(list) {
+    document.getElementById("q-count").textContent = list.length;
+    const start  = page * PAGE_SIZE;
+    const slice  = list.slice(start, start + PAGE_SIZE);
+    const container = document.getElementById("questions-list");
+
+    if (!list.length) {
+        container.innerHTML = `<div class="empty"><div class="icon">📭</div>Brak pytań w bazie.<br>Wygeneruj pierwsze pytania z panelu po lewej!</div>`;
+        document.getElementById("pagination").innerHTML = "";
+        return;
+    }
+
+    container.innerHTML = slice.map(q => {
+        const answers = q.answers.map((a, i) =>
+            `<div class="q-ans ${i === q.correct ? 'correct' : ''}">${i === q.correct ? '✓ ' : ''}${a}</div>`
+        ).join("");
+        const date = new Date(q.created_at).toLocaleString("pl-PL");
+        return `
+        <div class="q-card">
+            <div class="q-card-header">
+                <span class="q-id">#${q.id}</span>
+                <div class="q-meta">
+                    ${q.category ? `<span class="chip chip-cat">${q.category}</span>` : ""}
+                    ${q.source   ? `<span class="chip chip-src">📄 ${q.source}</span>` : ""}
+                </div>
+            </div>
+            <div class="q-text">${q.question}</div>
+            <div class="q-answers">${answers}</div>
+            ${q.explanation ? `<div class="q-explanation">💡 ${q.explanation}</div>` : ""}
+            <div class="q-footer">
+                <span class="q-date">🕐 ${date}</span>
+                ${token ? `<button class="btn-danger" onclick="deleteQuestion(${q.id})">🗑️ Usuń</button>` : ""}
+            </div>
+        </div>`;
+    }).join("");
+
+    // Pagination
+    const totalPages = Math.ceil(list.length / PAGE_SIZE);
+    if (totalPages <= 1) { document.getElementById("pagination").innerHTML = ""; return; }
+    let pages = "";
+    for (let i = 0; i < totalPages; i++) {
+        pages += `<button class="page-btn ${i===page?'active':''}" onclick="goPage(${i})">${i+1}</button>`;
+    }
+    document.getElementById("pagination").innerHTML = pages;
+    // Store filtered list for pagination
+    window._filteredList = list;
+}
+
+function goPage(n) {
+    page = n;
+    renderQuestions(window._filteredList || allQuestions);
+    window.scrollTo(0, 0);
+}
+
+async function deleteQuestion(id) {
+    if (!confirm("Usunąć pytanie #" + id + "?")) return;
+    try {
+        const r = await fetch(API + `/api/questions/${id}`, {
+            method: "DELETE",
+            headers: authHeader(),
+        });
+        if (!r.ok) throw new Error((await r.json()).detail);
+        setStatus("✅ Pytanie usunięte", "ok");
+        loadQuestions();
+    } catch (e) {
+        setStatus("❌ " + e.message, "err");
+    }
+}
+
+// ---- Init ----
+loadUser();
+loadQuestions();
+</script>
+</body>
+</html>
