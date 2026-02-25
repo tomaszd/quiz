@@ -24,7 +24,7 @@ load_dotenv()
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-OPENAI_API_KEY      = os.getenv("OPENAI_API_KEY", "")
+GROQ_API_KEY        = os.getenv("GROQ_API_KEY", "")
 GOOGLE_CLIENT_ID    = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
@@ -33,7 +33,13 @@ SECRET_KEY          = os.getenv("SECRET_KEY", "change-me")
 ALGORITHM           = "HS256"
 TOKEN_EXPIRE_DAYS   = 7
 
-openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+# Groq uses OpenAI-compatible API — just different base_url and model
+groq_client = OpenAI(
+    api_key=GROQ_API_KEY,
+    base_url="https://api.groq.com/openai/v1",
+) if GROQ_API_KEY else None
+
+GROQ_MODEL = "llama-3.3-70b-versatile"  # best free model on Groq
 
 # ---------------------------------------------------------------------------
 # App
@@ -170,12 +176,12 @@ Odpowiedz WYŁĄCZNIE w formacie JSON (bez markdown, bez ```):
 
 
 def _call_llm(content: str, n: int) -> list[dict]:
-    if not openai_client:
-        raise HTTPException(status_code=503, detail="OPENAI_API_KEY not configured")
+    if not groq_client:
+        raise HTTPException(status_code=503, detail="GROQ_API_KEY not configured — get free key at console.groq.com")
 
     prompt = QUIZ_PROMPT.format(n=n, content=content[:10_000])
-    response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = groq_client.chat.completions.create(
+        model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,
     )

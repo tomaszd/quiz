@@ -85,8 +85,8 @@ nano .env
 Wypełnij poniższe wartości w pliku `.env`:
 
 ```env
-# Klucz OpenAI — pobierz z https://platform.openai.com/api-keys
-OPENAI_API_KEY=sk-...
+# Klucz Groq (darmowy!) — pobierz z https://console.groq.com → API Keys
+GROQ_API_KEY=gsk-...
 
 # Baza danych (jeśli używasz lokalnego PostgreSQL jak wyżej)
 DATABASE_URL=postgresql://quizuser:quizpass@localhost:5432/quizdb
