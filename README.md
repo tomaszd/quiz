@@ -1,49 +1,56 @@
 # 🧠 Quiz App
 
-Aplikacja do quizów z panelem admina do generowania pytań przez AI (OpenAI GPT-4o-mini).
+Aplikacja quizowa z panelem admina do generowania pytań przez AI (Groq — darmowe!).
 
 ## Struktura projektu
 
 ```
 quiz/
-├── index.html          ← Frontend quizu (statyczna strona)
+├── index.html          ← Frontend quizu (statyczna strona HTML)
 ├── quiz.js             ← Logika quizu
 ├── style.css           ← Style
-├── questions.js        ← 250 pytań (5 kategorii)
-└── backend/            ← Serwis FastAPI (Python)
-    ├── main.py
-    ├── database.py
-    ├── models.py
-    ├── schemas.py
-    ├── admin.html
+├── questions.js        ← 250 gotowych pytań w 5 kategoriach
+└── backend/            ← Serwis API (Python / FastAPI)
+    ├── main.py         ← Wszystkie endpointy
+    ├── database.py     ← Połączenie z PostgreSQL
+    ├── models.py       ← Tabele bazy danych
+    ├── schemas.py      ← Walidacja danych
+    ├── admin.html      ← Panel admina
     ├── requirements.txt
-    └── .env.example
+    └── .env.example    ← Przykładowy plik konfiguracyjny
 ```
 
 ---
 
-## 🖥️ Uruchomienie lokalne (krok po kroku)
+## 🚀 Uruchomienie lokalne
 
-### 1. Wymagania wstępne
+### Wymagania
+
+- Python 3.10+
+- PostgreSQL
+
+---
+
+### Krok 1 — Sklonuj repozytorium
 
 ```bash
-# Sprawdź czy masz Python 3.10+
-python3 --version
-
-# Sprawdź czy PostgreSQL działa
-pg_isready
+git clone https://github.com/tomaszd/quiz.git
+cd quiz
 ```
 
-Jeśli nie masz PostgreSQL:
+---
+
+### Krok 2 — Zainstaluj PostgreSQL (jeśli nie masz)
+
 ```bash
-# Ubuntu/Debian
+# Ubuntu / Debian
 sudo apt install postgresql postgresql-contrib
 sudo systemctl start postgresql
 ```
 
 ---
 
-### 2. Utwórz bazę danych
+### Krok 3 — Utwórz bazę danych
 
 ```bash
 sudo -u postgres createdb quizdb
@@ -53,218 +60,175 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE quizdb TO quizuser;"
 
 ---
 
-### 3. Skonfiguruj projekt
+### Krok 4 — Utwórz środowisko Python i zainstaluj zależności
 
 ```bash
-# Wejdź do katalogu backendu
 cd backend
 
-# Utwórz wirtualne środowisko Python
 python3 -m venv venv
-
-# Aktywuj środowisko
-source venv/bin/activate        # Linux/Mac
+source venv/bin/activate        # Linux / Mac
 # lub: venv\Scripts\activate    # Windows
 
-# Zainstaluj zależności
 pip install -r requirements.txt
 ```
 
 ---
 
-### 4. Ustaw zmienne środowiskowe
+### Krok 5 — Skonfiguruj plik .env
 
 ```bash
-# Skopiuj przykładowy plik konfiguracyjny
 cp .env.example .env
-
-# Otwórz i uzupełnij plik .env
 nano .env
 ```
 
-Wypełnij poniższe wartości w pliku `.env`:
+Wypełnij plik `.env`:
 
 ```env
-# Klucz Groq (darmowy!) — pobierz z https://console.groq.com → API Keys
-GROQ_API_KEY=gsk-...
+# ✅ WYMAGANE — klucz Groq AI (darmowy)
+# Pobierz na: https://console.groq.com → API Keys → Create API Key
+GROQ_API_KEY=gsk_...
 
-# Baza danych (jeśli używasz lokalnego PostgreSQL jak wyżej)
+# ✅ WYMAGANE — baza danych
 DATABASE_URL=postgresql://quizuser:quizpass@localhost:5432/quizdb
 
-# Google OAuth — pobierz z https://console.cloud.google.com
+# ✅ WYMAGANE — losowy sekret do tokenów JWT
+# Wygeneruj: openssl rand -hex 32
+SECRET_KEY=wpisz-tutaj-losowy-ciag-znakow
+
+# ⬜ OPCJONALNE — logowanie przez Google
+# Pobierz z: https://console.cloud.google.com → APIs & Services → Credentials
 GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-...
 GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
-
-# Po zalogowaniu przez Google, przekieruj tutaj
 FRONTEND_URL=http://localhost:8000/admin
-
-# Losowy sekret do JWT — wygeneruj np.: openssl rand -hex 32
-SECRET_KEY=wygenerowany-losowy-klucz
 ```
 
 ---
 
-### 5. Uruchom serwer
+### Krok 6 — Uruchom serwer
 
 ```bash
 # Upewnij się że jesteś w katalogu backend/ z aktywnym venv
-cd backend
-source venv/bin/activate
-
 uvicorn main:app --reload --port 8000
 ```
 
-Serwer startuje automatycznie i tworzy tabele w bazie przy pierwszym uruchomieniu.
+Przy pierwszym uruchomieniu tabele w bazie danych tworzą się automatycznie.
 
 ---
 
-### 6. Otwórz w przeglądarce
+### Krok 7 — Otwórz w przeglądarce
 
-| Adres | Opis |
-|-------|------|
-| `http://localhost:8000/admin` | Panel admina — generuj pytania, przeglądaj bazę |
-| `http://localhost:8000/docs` | Swagger UI — testuj API ręcznie |
-| `http://localhost:8000/api/questions` | JSON z pytaniami z bazy |
-| `file:///ścieżka/do/index.html` | Frontend quizu (otwórz bezpośrednio) |
+| Adres | Co tam jest |
+|-------|-------------|
+| `http://localhost:8000/admin` | 🖥️ Panel admina — generuj pytania z AI, przeglądaj bazę |
+| `http://localhost:8000/docs` | 📖 Swagger UI — interaktywna dokumentacja API |
+| `http://localhost:8000/api/questions` | 📋 JSON z pytaniami z bazy |
+| Otwórz `index.html` w przeglądarce | 🧠 Frontend quizu |
 
 ---
 
-## 🔑 Konfiguracja Google OAuth (logowanie przez Google)
+## 🔄 Skrót — codzienne uruchamianie
 
-1. Wejdź na [console.cloud.google.com](https://console.cloud.google.com)
-2. Utwórz nowy projekt (lub wybierz istniejący)
-3. Wejdź w **APIs & Services** → **Credentials**
-4. Kliknij **Create Credentials** → **OAuth 2.0 Client ID**
-5. Wybierz typ: **Web application**
-6. W sekcji **Authorized redirect URIs** dodaj:
+Po pierwszej konfiguracji wystarczą tylko 3 komendy:
+
+```bash
+cd ~/quiz/backend
+source venv/bin/activate
+uvicorn main:app --reload --port 8000
+```
+
+---
+
+## 🔑 Jak zdobyć darmowy klucz Groq API
+
+1. Wejdź na **[console.groq.com](https://console.groq.com)**
+2. Zaloguj się przez GitHub lub Google
+3. Kliknij **API Keys** → **Create API Key**
+4. Skopiuj klucz (zaczyna się od `gsk_...`)
+5. Wklej do `.env` jako wartość `GROQ_API_KEY`
+
+**Limity darmowego konta:**
+
+| Model | Requesty/dzień | Wystarczy na |
+|-------|---------------|--------------|
+| llama-3.3-70b-versatile | 1 000 | ~100 quizów/dzień |
+| llama-3.1-8b-instant | 14 400 | praktycznie bez limitu |
+
+---
+
+## 🔑 Konfiguracja Google OAuth (opcjonalne)
+
+Logowanie przez Google jest opcjonalne — aplikacja działa bez niego.
+
+Jeśli chcesz je włączyć:
+
+1. Wejdź na **[console.cloud.google.com](https://console.cloud.google.com)**
+2. Utwórz projekt → **APIs & Services** → **Credentials**
+3. Kliknij **Create Credentials** → **OAuth 2.0 Client ID**
+4. Typ: **Web application**
+5. **Authorized redirect URIs** dodaj:
    ```
    http://localhost:8000/auth/google/callback
    ```
-   (dla produkcji dodaj też: `https://twoja-domena.com/auth/google/callback`)
-7. Skopiuj **Client ID** i **Client Secret** do pliku `.env`
-
-> ⚠️ Bez konfiguracji Google OAuth aplikacja działa normalnie —
-> logowanie przez Google jest opcjonalne. Generowanie pytań i przeglądanie bazy
-> działa bez logowania.
+6. Skopiuj **Client ID** i **Client Secret** do `.env`
 
 ---
 
-## 🌐 Deployment na Railway.app (darmowy hosting)
+## 🌐 Deployment na Railway.app (darmowy hosting w chmurze)
 
-Railway oferuje darmowy tier z PostgreSQL w chmurze.
-
-### Krok 1 — Konto i projekt
-
-1. Wejdź na [railway.app](https://railway.app) i zaloguj przez GitHub
-2. Kliknij **New Project** → **Deploy from GitHub repo**
-3. Wybierz repozytorium `quiz`
-
-### Krok 2 — Dodaj bazę danych
-
-1. W projekcie kliknij **+ New** → **Database** → **Add PostgreSQL**
-2. Railway automatycznie ustawi zmienną `DATABASE_URL`
-
-### Krok 3 — Skonfiguruj serwis
-
-1. W zakładce swojego serwisu przejdź do **Settings**
-2. Ustaw **Root Directory**: `backend`
-3. Ustaw **Start Command**:
+1. Wejdź na **[railway.app](https://railway.app)** → zaloguj przez GitHub
+2. **New Project** → **Deploy from GitHub repo** → wybierz `quiz`
+3. **+ New** → **Database** → **Add PostgreSQL** (Railway ustawi `DATABASE_URL` automatycznie)
+4. W ustawieniach serwisu ustaw:
+   - **Root Directory**: `backend`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. W zakładce **Variables** dodaj:
    ```
-   uvicorn main:app --host 0.0.0.0 --port $PORT
+   GROQ_API_KEY       = gsk_...
+   SECRET_KEY         = losowy-klucz
+   GOOGLE_CLIENT_ID   = (opcjonalne)
+   GOOGLE_CLIENT_SECRET = (opcjonalne)
+   GOOGLE_REDIRECT_URI = https://twoja-app.up.railway.app/auth/google/callback
+   FRONTEND_URL        = https://twoja-app.up.railway.app/admin
    ```
-
-### Krok 4 — Dodaj zmienne środowiskowe
-
-W zakładce **Variables** dodaj:
-
-```
-OPENAI_API_KEY        = sk-...
-GOOGLE_CLIENT_ID      = xxxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET  = GOCSPX-...
-GOOGLE_REDIRECT_URI   = https://twoja-app.up.railway.app/auth/google/callback
-FRONTEND_URL          = https://twoja-app.up.railway.app/admin
-SECRET_KEY            = wygenerowany-losowy-klucz
-```
-
-> `DATABASE_URL` jest ustawiane automatycznie przez Railway.
-
-### Krok 5 — Deploy
-
-Railway automatycznie robi deploy po każdym `git push` do `main`. 🎉
+6. Railway automatycznie robi deploy po każdym `git push` ✅
 
 ---
 
 ## 📡 Endpointy API
 
-### Generowanie pytań
-
 ```
-POST /api/generate/topic
-```
-```json
-{
-  "topic": "Fotosynteza u roślin",
-  "count": 10,
-  "category": "Biologia"
-}
-```
-
-```
-POST /api/generate/pdf
-```
-Multipart form data: plik PDF + parametry `count` i `category`.
-
-### Pytania w bazie
-
-```
-GET  /api/questions              ← lista pytań (opcjonalne ?category=&source=)
-GET  /api/questions/{id}         ← pojedyncze pytanie
-DELETE /api/questions/{id}       ← usuń pytanie (wymaga logowania)
-GET  /api/categories             ← lista kategorii w bazie
-```
-
-### Autoryzacja
-
-```
-GET /auth/google                 ← przekierowanie do Google
-GET /auth/google/callback        ← callback po zalogowaniu
-GET /auth/me                     ← dane zalogowanego użytkownika
-```
-
----
-
-## 🔄 Codzienne uruchamianie (skrót)
-
-```bash
-cd ~/PROJECTS/quiz/backend
-source venv/bin/activate
-uvicorn main:app --reload --port 8000
+POST   /api/generate/topic     ← generuj pytania z podanego tematu
+POST   /api/generate/pdf       ← generuj pytania z wgranego PDF
+GET    /api/questions           ← lista pytań z bazy (?category= ?source=)
+GET    /api/questions/{id}      ← pojedyncze pytanie
+DELETE /api/questions/{id}      ← usuń pytanie (wymaga zalogowania)
+GET    /api/categories          ← lista kategorii w bazie
+GET    /auth/google             ← logowanie przez Google
+GET    /auth/me                 ← dane zalogowanego użytkownika
 ```
 
 ---
 
 ## 🛠️ Rozwiązywanie problemów
 
-**Problem: `psycopg2` nie może się połączyć z bazą**
+**`psycopg2` nie może połączyć się z bazą**
 ```bash
-# Sprawdź czy PostgreSQL działa
 sudo systemctl status postgresql
 sudo systemctl start postgresql
 ```
 
-**Problem: `ModuleNotFoundError`**
+**`ModuleNotFoundError`**
 ```bash
-# Upewnij się że masz aktywne venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**Problem: OpenAI zwraca błąd 401**
+**Groq zwraca błąd 401**
 ```bash
-# Sprawdź czy klucz jest poprawnie ustawiony
-cat .env | grep OPENAI
+# Sprawdź czy klucz jest w .env
+grep GROQ_API_KEY .env
 ```
 
-**Problem: Google OAuth nie działa lokalnie**
-- Upewnij się że w Google Console dodałeś `http://localhost:8000/auth/google/callback` jako dozwolony redirect URI
+**Google OAuth nie działa**
+- Sprawdź czy `http://localhost:8000/auth/google/callback` jest dodany w Google Console jako dozwolony redirect URI
